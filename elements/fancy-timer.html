@@ -1,0 +1,72 @@
+<link rel="import" href="../elements/digital-clock-base.html">
+
+<polymer-element name="fancy-timer">
+	<template>
+		<div class="container">
+			<div>
+				<digital-clock-base id="clock_base" editable="{{editable}}"></digital-clock-base>
+			</div>
+			<div>
+				<input type="button" value="Countdown" on-click="{{start}}" />
+				<input type="button" value="Reset" on-click="{{reset}}"/ >
+			</div>
+		</div>
+		<style>
+			.container {
+				border-style: solid;
+				border-width: 1px;
+				padding: 5px;
+				margin: 5px;
+				width: 160px;
+			}
+		</style>
+	</template>
+	<script>
+		(function () {
+			var STATES = {
+				NOT_RUNNING: 0,
+				RUNNING: 1
+			};
+			// run 10x faster
+			var CLOCK_TIME_PERIOD = 100;
+			var timer_instance = null;
+			var state = STATES.NOT_RUNNING;
+			function notify() {
+				alert("Timer ended");
+			}
+			Polymer("fancy-timer", {
+				editable: true,
+				start: function () {
+					if (state === STATES.RUNNING) {
+						return;
+					}
+					state = STATES.RUNNING;
+					this.editable = false;
+					function update_clock() {
+						var time_now = this.clock_base.get_time();
+						if (time_now.hours === 0 &&
+							time_now.minutes === 0 &&
+							time_now.seconds === 0) {
+							this.reset();
+							notify();
+							return;
+						}
+						this.clock_base.prev();
+						timer_instance = window.setTimeout(update_clock.bind(this), CLOCK_TIME_PERIOD);
+					}
+					timer_instance = window.setTimeout(update_clock.bind(this), CLOCK_TIME_PERIOD);
+				},
+				reset: function () {
+					window.clearTimeout(timer_instance);
+					timer_instance = null;
+					this.clock_base.reset();
+					this.editable = true;
+					state = STATES.FRESH;
+				},
+				ready: function () {
+					this.clock_base = this.$.clock_base;
+				}
+			});
+		})();
+	</script>
+</polymer-element>
