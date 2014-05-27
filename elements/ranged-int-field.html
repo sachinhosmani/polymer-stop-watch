@@ -1,0 +1,33 @@
+<link rel="import" href="../elements/text-field.html">
+
+<!--
+	An integer text field that enforces range constraints.
+-->
+<polymer-element name="ranged-int-field" attributes="min max value editable">
+	<template>
+		<text-field id="text_field" char_limit="2" field_size="2" type="integer"
+		value="{{value}}" disabled="{{!editable}}">
+		</text-field>
+	</template>
+	<script>
+		(function () {
+			function check_validity(val, min, max) {
+				return (val >= min) && (val <= max);
+			}
+			Polymer("ranged-int-field", {
+				min: -Infinity,
+				max: Infinity,
+				value: 0,
+				editable: false,
+				valueChanged: function (oldVal, newVal) {
+					if (!check_validity(newVal, this.min, this.max)) {
+						this.value = oldVal;
+					}
+				},
+				ready: function () {
+					this.text_field = this.$.text_field;
+				}
+			});
+		})();
+	</script>
+</polymer-element>

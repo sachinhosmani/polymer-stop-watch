@@ -1,0 +1,47 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<!--
+	A text field that enforces type checking of contents.
+-->
+<polymer-element name="text-field" attributes="value char_limit field_size type disabled">
+	<template>
+		<input id="input" type="text" maxlength="{{char_limit}}" size="{{field_size}}"
+		value="{{value}}" type="{{type}}" disabled?="{{disabled}}" />
+	</template>
+	<script>
+		(function () {
+			function check_validity (str, type) {
+				/* 
+				Would have loved to avoid this and let the user pass in whatever
+				constraints he wants as a function, but I don't think that can be 
+				in the declarative style.
+				So, now the types are hard-coded.
+				*/
+				var validation_functions = {
+					number: function (str) {
+						return !isNaN(str) || str === "";
+					},
+					integer: function (str) {
+						return this.number(str) && parseInt(str) % 1 === 0;
+					},
+					text: function (str) {
+						return true;
+					}
+				};
+				return validation_functions[type](str);
+			}
+			Polymer("text-field", {
+				char_limit: 2,
+				field_size: 2,
+				type: "text",
+				value: "",
+				disabled: false,
+				valueChanged: function (oldVal, newVal) {
+					if (!check_validity(newVal, this.type)) {
+						this.value = oldVal;
+					}
+				}
+			});
+		})();
+	</script>
+</polymer-element>

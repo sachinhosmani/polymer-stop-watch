@@ -1,0 +1,75 @@
+<link rel="import" href="../elements/digital-clock-base.html">
+
+<polymer-element name="stop-watch">
+	<template>
+		<div class="container">
+			<div>
+				<digital-clock-base id="clock_base"></digital-clock-base>
+			</div>
+			<div>
+				<input type="button" value="{{btn_label}}" on-click="{{handle_start_pause}}" />
+				<input type="button" value="Reset" on-click="{{reset}}" />
+			</div>
+		</div>
+		<style>
+			.container {
+				border-style: solid;
+				border-width: 1px;
+				padding: 5px;
+				margin: 5px;
+				width: 160px;
+			}
+		</style>
+	</template>
+	<script>
+		(function () {
+			var STATES = {
+				FRESH: 0,
+				RUNNING: 1,
+				PAUSED: 2
+			};
+			// run 10x faster
+			var CLOCK_TIME_PERIOD = 100;
+			var timer_instance = null;
+			var state = STATES.FRESH;
+			Polymer("stop-watch", {
+				btn_label: "Start",
+				start: function () {
+					if (state === STATES.RUNNING) {
+						return;
+					}
+					state = STATES.RUNNING;
+					this.btn_label = "Pause";
+					function update_clock() {
+						this.clock_base.next();
+						timer_instance = window.setTimeout(update_clock.bind(this), CLOCK_TIME_PERIOD);
+					}
+					timer_instance = window.setTimeout(update_clock.bind(this), CLOCK_TIME_PERIOD);
+				},
+				reset: function () {
+					window.clearTimeout(timer_instance);
+					timer_instance = null;
+					this.clock_base.reset();
+					state = STATES.FRESH;
+					this.btn_label = "Start";
+				},
+				pause: function () {
+					window.clearTimeout(timer_instance);
+					timer_instance = null;
+					state = STATES.PAUSED;
+					this.btn_label = "Start";
+				},
+				ready: function () {
+					this.clock_base = this.$.clock_base;
+				},
+				handle_start_pause: function () {
+					if (state === STATES.RUNNING) {
+						this.pause();
+					} else {
+						this.start();
+					}
+				}
+			});
+		})();
+	</script>
+</polymer-element>

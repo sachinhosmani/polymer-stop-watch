@@ -1,0 +1,179 @@
+<link rel="import" href="../elements/ranged-int-field.html">
+
+<!--
+	Three ranged-int-fields coordinated together to behave as hours, minutes and hours
+	of a digital clock. Has basic clock format/semantics enforcement logic.
+-->
+<polymer-element name="digital-clock-base" attributes="editable">
+	<template>
+		<template repeat="{{obj in ui_data}}">
+			<ranged-int-field value="{{obj.value}}" min="{{obj.min}}" max="{{obj.max}}" editable="{{editable}}">
+			</ranged-int-field>
+		</template>
+	</template>
+	<script>
+		(function () {
+			/*
+			All the clock logic
+			*/
+			var SECONDS = 59;
+			var MINUTES = 59;
+			var HOURS = 23;
+			function create_time_object_from_array(time) {
+				// [hours, minutes, seconds]
+				return [
+					{
+						val: time[0],
+						min: 0,
+						max: SECONDS
+					},
+					{
+						val: time[1],
+						min: 0,
+						max: MINUTES
+					},
+					{
+						val: time[2],
+						min: 0,
+						max: HOURS
+					}
+				];
+			}
+			/*
+			* Decrement time by 1 second.
+			* Could possibly used by a timer.
+			*/
+			function decrement_time (time) {
+				/*
+				* Triggers a decrease in the first element of the array
+				* and propagates it through the array.
+				*/
+				function weighted_array_decrease (time_arr) {
+					// [seconds, minutes, hours]
+					function lies_in(el, min, max) {
+						return el >= min && el <= max;
+					}
+					for (var i = 0; i < time_arr.length; i++) {
+						time_arr[i].val -= 1;
+						if (lies_in(time_arr[i].val, time_arr[i].min, time_arr[i].max)) {
+							break;
+						} else {
+							time_arr[i].val = time_arr[i].max;
+						}
+					}
+					return time_arr;
+				}
+				return weighted_array_decrease(create_time_object_from_array(time)).
+					map(function (el) {
+						return el.val;
+					});
+			}
+			/*
+			* Increment time by 1 second.
+			*/
+			function increment_time (time) {
+				/*
+				* Triggers an increase in the first element of the array
+				* and propagates it through the array.
+				*/
+				function weighted_array_increase (time_arr) {
+					// [seconds, minutes, hours]
+					function lies_in(el, min, max) {
+						return el >= min && el <= max;
+					}
+					for (var i = 0; i < time_arr.length; i++) {
+						time_arr[i].val += 1;
+						if (lies_in(time_arr[i].val, time_arr[i].min, time_arr[i].max)) {
+							break;
+						} else {
+							time_arr[i].val = time_arr[i].min;
+						}
+					}
+					return time_arr;
+				}
+				return weighted_array_increase(create_time_object_from_array(time)).
+					map(function (el) {
+						return el.val;
+					});
+			}
+			Polymer("digital-clock-base", {
+				editable: false,
+				get hours () {
+					return parseInt(this.ui_data[0].value);
+				},
+				get minutes () {
+					return parseInt(this.ui_data[1].value);
+				},
+				get seconds () {
+					return parseInt(this.ui_data[2].value);
+				},
+				set hours (val) {
+					this.ui_data[0].value = parseInt(val);
+				},
+				set minutes (val) {
+					this.ui_data[1].value = parseInt(val);
+				},
+				set seconds (val) {
+					this.ui_data[2].value = parseInt(val);
+				},
+				set_time: function (time) {
+					this.hours = time.hours;
+					this.minutes = time.minutes;
+					this.seconds = time.seconds;
+				},
+				get_time: function () {
+					return {
+						hours: this.hours,
+						minutes: this.minutes,
+						seconds: this.seconds
+					};
+				},
+				get_time_as_string: function () {
+					return this.hours + ":" + this.minutes + ":" + this.seconds;
+				},
+				next: function () {
+					var new_time = increment_time([this.seconds, this.minutes, this.hours]);
+					this.set_time({
+						hours: new_time[2],
+						minutes: new_time[1],
+						seconds: new_time[0]
+					});
+				},
+				prev: function () {
+					var new_time = decrement_time([this.seconds, this.minutes, this.hours]);
+					this.set_time({
+						hours: new_time[2],
+						minutes: new_time[1],
+						seconds: new_time[0]
+					});
+				},
+				reset: function () {
+					this.set_time({
+						hours: 0,
+						minutes: 0,
+						seconds: 0
+					});
+				},
+				ready: function () {
+					this.ui_data = [
+						{
+							min: 0,
+							max: HOURS,
+							value: 0
+						},
+						{
+							min: 0,
+							max: MINUTES,
+							value: 0
+						},
+						{
+							min: 0,
+							max: SECONDS,
+							value: 0
+						}
+					];
+				}
+			});
+		})();
+	</script>
+</polymer-element>
